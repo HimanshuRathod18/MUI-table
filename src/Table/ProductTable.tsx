@@ -5,7 +5,8 @@ import {
   type MRT_ColumnDef,
   type MRT_PaginationState,
 } from "material-react-table";
-import { fetchProducts } from "./fetchProducts";
+import { fetchProducts , fetchCategoryList, brandsList} from "./fetchProducts";
+import { sortProducts } from "./sortProducts";
 
 interface Product {
   title: string;
@@ -13,9 +14,11 @@ interface Product {
   price: number;
   stock: number;
   rating: number;
+  brand: string;
 }
 
 export const ProductTable = () => {
+  fetchCategoryList();
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: 0,
     pageSize: 5,
@@ -23,6 +26,32 @@ export const ProductTable = () => {
   const [columnFilters, setColumnFilters] = useState<any>([]);
   const [totalRecords, setTotalRecords] = useState(0);
   const [productData, setProductData] = useState([]);
+  const [categoryList, setCategoryList] = useState([]);
+  const [brandList, setBrandsList] = useState([]);
+  const [sorting, setSorting] = useState<any>([]);
+
+useEffect(() => {
+  async function getDataOnLoad(){
+    const dataList = await fetchCategoryList();
+      setCategoryList(dataList);
+    const brands = await brandsList();
+    setBrandsList(brands);
+  }
+  getDataOnLoad();
+},[]);
+
+useEffect(() => {
+  async function sort(){
+    if(sorting.length === 0) return;
+    const products= await sortProducts(sorting, pagination);
+    setProductData(products);
+  }
+  sort();
+}, [sorting]);
+
+
+
+
   useEffect(() => {
     async function loadData() {
       const { products, total } = await fetchProducts(
@@ -35,7 +64,6 @@ export const ProductTable = () => {
     }
     loadData();
   }, [pagination.pageIndex, pagination.pageSize, columnFilters]);
-
   const columns = useMemo<MRT_ColumnDef<Product>[]>(
     () => [
       {
@@ -53,13 +81,28 @@ export const ProductTable = () => {
       {
         accessorKey: "category",
         header: "Category",
-        filterVariant: "text",
+        filterVariant: "select",
+        filterSelectOptions: categoryList || [],
         size: 150,
       },
       {
         accessorKey: "stock",
         header: "Stock",
         filterVariant: "range-slider",
+         filterFn: 'betweenInclusive',
+        muiFilterSliderProps: {
+          marks: true,
+          max: 500, 
+          min: 0, 
+          step: 10,
+        },
+        size: 150,
+      },
+      {
+        accessorKey: 'brand',
+        header: 'Brand',
+        filterVariant: 'multi-select',
+        filterSelectOptions: brandList || [],
         size: 150,
       },
       {
@@ -69,7 +112,7 @@ export const ProductTable = () => {
         size: 150,
       },
     ],
-    []
+    [categoryList, brandList]
   );
   const data = productData || [];
   const table = useMaterialReactTable({
@@ -77,11 +120,12 @@ export const ProductTable = () => {
     data,
     manualPagination: true,
     rowCount: totalRecords,
-    state: { pagination, columnFilters },
+    state: { pagination, columnFilters, sorting },
     manualFiltering: true,
     initialState: { showColumnFilters: true },
     onPaginationChange: setPagination,
     onColumnFiltersChange: setColumnFilters,
+    onSortingChange: setSorting,
   });
 
   return productData.length === 0 ? (
