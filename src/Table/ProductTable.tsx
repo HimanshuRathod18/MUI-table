@@ -16,7 +16,7 @@ export const ProductTable = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [productData, setProductData] = useState<Product[]>([]);
   const [categoryList, setCategoryList] = useState([]);
-  const [brandList, setBrandsList] = useState([]);
+  const [brandList, setBrandsList] = useState<any>([]);
   const [sorting, setSorting] = useState<any>([]);
 // console.log('::: categoryList', categoryList);
 useEffect(() => {
