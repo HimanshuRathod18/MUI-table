@@ -1,4 +1,5 @@
 export type Product = {
+  id: number;
   title: string;
   category: string;
   price: number;
@@ -51,6 +52,7 @@ export const fetchProducts = async (
   const data = await response.json();
 
   const products: Product[] = (data.products || []).map((p: any) => ({
+    id: p.id,
     title: p.title,
     category: p.category,
     price: p.price,
@@ -129,8 +131,18 @@ export const sortProducts = async (sorting: any, pagination: any
     return products;
 }
 
+export const deleteProductById = async (id: number) => {
+  const response = await fetch(`${URL}/${id}`, {
+    method: 'DELETE',
+  });
+  const data = await response.json();
+  const {isDeleted, deletedOn} = data;
+  return {isDeleted, deletedOn};
+}
+
 const filterProducts = (products: any) =>
-  products.map(({ title, category, price, rating, stock, brand }: any) => ({
+  products.map(({ id,title, category, price, rating, stock, brand }: any) => ({
+    id,
     title,
     category,
     price,

@@ -5,7 +5,8 @@ import {
   type MRT_ColumnDef,
   type MRT_PaginationState,
 } from "material-react-table";
-import { fetchProducts , fetchCategoryList, brandsList,sortProducts, type Product} from "../api";
+import { fetchProducts , fetchCategoryList, brandsList,sortProducts,deleteProductById, type Product} from "../api";
+import { MultiSelectAutocompleteFilter } from "../components/MultiSelectAutoComplete";
 
 export const ProductTable = () => {
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -18,8 +19,8 @@ export const ProductTable = () => {
   const [categoryList, setCategoryList] = useState([]);
   const [brandList, setBrandsList] = useState<any>([]);
   const [sorting, setSorting] = useState<any>([]);
-// console.log('::: categoryList', categoryList);
-useEffect(() => {
+
+  useEffect(() => {
   async function getDataOnLoad(){
     const dataList = await fetchCategoryList();
       setCategoryList(dataList);
@@ -87,7 +88,8 @@ useEffect(() => {
         header: 'Brand',
         filterVariant: 'multi-select',
         filterSelectOptions: brandList || [],
-        size: 150,
+        Filter: (props) => <MultiSelectAutocompleteFilter {...props} filterSelectOptions={brandList || []} />,
+        size: 250,
       },
       {
         accessorKey: "rating",
@@ -95,6 +97,23 @@ useEffect(() => {
         filterVariant: "text",
         size: 150,
       },
+      {
+        accessorKey: "id",
+        header: 'Delete',
+        size: 100,
+        Cell:({row})=>(
+          <button
+            onClick={async ()=>{
+              const idToRemove = row.original.id;
+              const delProuct = await deleteProductById(idToRemove);
+              setProductData((prevData) => prevData.filter((item) => item.id !== idToRemove));
+              setTotalRecords((prevTotal) => prevTotal - 1);
+            }}
+          >
+            Delete
+          </button>
+        )
+      }
     ],
     [categoryList, brandList]
   );
