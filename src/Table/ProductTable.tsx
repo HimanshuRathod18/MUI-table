@@ -5,31 +5,20 @@ import {
   type MRT_ColumnDef,
   type MRT_PaginationState,
 } from "material-react-table";
-import { fetchProducts , fetchCategoryList, brandsList} from "./fetchProducts";
-import { sortProducts } from "./sortProducts";
-
-interface Product {
-  title: string;
-  category: string;
-  price: number;
-  stock: number;
-  rating: number;
-  brand: string;
-}
+import { fetchProducts , fetchCategoryList, brandsList,sortProducts, type Product} from "../api";
 
 export const ProductTable = () => {
-  fetchCategoryList();
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: 0,
     pageSize: 5,
   });
   const [columnFilters, setColumnFilters] = useState<any>([]);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [productData, setProductData] = useState([]);
+  const [productData, setProductData] = useState<Product[]>([]);
   const [categoryList, setCategoryList] = useState([]);
   const [brandList, setBrandsList] = useState([]);
   const [sorting, setSorting] = useState<any>([]);
-
+// console.log('::: categoryList', categoryList);
 useEffect(() => {
   async function getDataOnLoad(){
     const dataList = await fetchCategoryList();
@@ -39,18 +28,6 @@ useEffect(() => {
   }
   getDataOnLoad();
 },[]);
-
-useEffect(() => {
-  async function sort(){
-    if(sorting.length === 0) return;
-    const products= await sortProducts(sorting, pagination);
-    setProductData(products);
-  }
-  sort();
-}, [sorting]);
-
-
-
 
   useEffect(() => {
     async function loadData() {
@@ -62,8 +39,15 @@ useEffect(() => {
       setProductData(products);
       setTotalRecords(total);
     }
+    async function sort(){
+      if(sorting.length === 0) return;
+      const products= await sortProducts(sorting, pagination);
+      setProductData(products);
+  }
     loadData();
-  }, [pagination.pageIndex, pagination.pageSize, columnFilters]);
+    sort();
+  }, [pagination.pageIndex, pagination.pageSize, columnFilters, sorting]);
+
   const columns = useMemo<MRT_ColumnDef<Product>[]>(
     () => [
       {
@@ -92,7 +76,7 @@ useEffect(() => {
          filterFn: 'betweenInclusive',
         muiFilterSliderProps: {
           marks: true,
-          max: 500, 
+          max: 200, 
           min: 0, 
           step: 10,
         },
@@ -114,6 +98,7 @@ useEffect(() => {
     ],
     [categoryList, brandList]
   );
+
   const data = productData || [];
   const table = useMaterialReactTable({
     columns,
